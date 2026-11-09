@@ -156,18 +156,32 @@ def attack(profiles, anon_methods, attacker_name, model_version, scenario,
                 # profile_id, text, attacker, scenario, attributes, language, interactive
             ]
 
+            # Each result is written as soon as it arrives, and a profile whose
+            # call still fails after the attacker's own retries is left without
+            # a guess instead of aborting the method: the finished calls are kept
+            # and the next run only re-attacks the missing profiles (see
+            # to_attack above).
+            by_id = {profile["id"]: profile for profile in to_attack}
+            failed_ids = []
             n_workers = 1 if interactive else 10
             with ThreadPoolExecutor(max_workers=n_workers) as executor:
                 futures = {executor.submit(attack_one_profile, inp): inp for inp in inputs}
                 for future in tqdm(as_completed(futures), total=len(inputs)):
-                    results_list.append(future.result())
-            guesses = {profile_id: guess for profile_id, guess, prompt in results_list}
-            prompts = {profile_id: prompt for profile_id, guess, prompt in results_list}
-            for profile in to_attack:
-                profile[guess_key] = guesses[profile["id"]]
-                profile[prompt_key] = prompts[profile["id"]]
+                    try:
+                        profile_id, guess, prompt = future.result()
+                    except Exception as e:
+                        failed_ids.append(futures[future][0])
+                        print(f"[attack] {anon_method}: profile {futures[future][0]} failed, left for the next run: {e}")
+                        continue
+                    by_id[profile_id][guess_key] = guess
+                    by_id[profile_id][prompt_key] = prompt
+                    write_output(f"{results_path}/level_{level}.jsonl", profiles)
 
-            write_output(f"{results_path}/level_{level}.jsonl", profiles)
+            if failed_ids:
+                raise RuntimeError(
+                    f"{len(failed_ids)} profile(s) failed for {anon_method} ({failed_ids[:10]}). "
+                    "Results so far are saved; run the same command again to attack only the missing ones."
+                )
 
         if scenario in ["Concert ticket purchase", "Tourist information chatbot", "Topic history", "public info"]:
             print(f"Inferring public info for {scenario}")

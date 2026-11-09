@@ -1,0 +1,56 @@
+{
+  "project": {
+    "name": "RAT-Bench-claude",
+    "description": "CCPM managed project",
+    "repository": {
+      "url": "https://github.com/inkan-tech/rat-bench.git",
+      "defaultBranch": "main"
+    }
+  },
+  "directories": {
+    "ccpm": "ccpm",
+    "specs": "specs",
+    "worktrees": "worktrees"
+  },
+  "github": {
+    "enabled": true,
+    "issueLabels": [
+      "epic",
+      "feature",
+      "bug",
+      "enhancement",
+      "documentation",
+      "testing",
+      "infrastructure"
+    ],
+    "priorities": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ],
+    "statuses": [
+      "backlog",
+      "in-progress",
+      "review",
+      "done"
+    ]
+  },
+  "workflow": {
+    "branchNaming": {
+      "epic": "epic/{name}",
+      "feature": "feature/{name}",
+      "bugfix": "bugfix/{name}",
+      "hotfix": "hotfix/{name}"
+    },
+    "autoAssignIssues": true,
+    "requireReviewForMerge": true
+  },
+  "ai": {
+    "maxConcurrentAgents": 3,
+    "defaultAgentModel": "sonnet-4-5",
+    "timeoutMinutes": 30
+  },
+  "created": "2026-11-09T14:20:50Z",
+  "lastUpdated": "2026-11-09T14:20:50Z"
+}

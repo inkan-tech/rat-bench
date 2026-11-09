@@ -1,0 +1,59 @@
+{
+  "repository": {
+    "owner": "inkan-tech",
+    "name": "rat-bench",
+    "url": "https://github.com/inkan-tech/rat-bench.git",
+    "defaultBranch": "main",
+    "isPrivate": false
+  },
+  "authentication": {
+    "cliInstalled": true,
+    "authenticated": true,
+    "user": "thomnico"
+  },
+  "integration": {
+    "enabled": true,
+    "autoSync": true,
+    "createIssuesFromPRD": true,
+    "linkIssuesToCommits": true
+  },
+  "labels": {
+    "epic": {
+      "name": "epic",
+      "color": "FF6B6B",
+      "description": "Large feature that spans multiple issues"
+    },
+    "feature": {
+      "name": "feature",
+      "color": "0079BF",
+      "description": "New functionality or feature"
+    },
+    "bug": {
+      "name": "bug",
+      "color": "E11D21",
+      "description": "Something isn't working"
+    },
+    "enhancement": {
+      "name": "enhancement",
+      "color": "84B6EB",
+      "description": "Improvement to existing functionality"
+    },
+    "documentation": {
+      "name": "documentation",
+      "color": "FCE74C",
+      "description": "Improvements to documentation"
+    },
+    "testing": {
+      "name": "testing",
+      "color": "5319E7",
+      "description": "Test coverage and testing improvements"
+    },
+    "infrastructure": {
+      "name": "infrastructure",
+      "color": "6CC644",
+      "description": "Infrastructure and deployment improvements"
+    }
+  },
+  "lastSync": null,
+  "configuredAt": "2026-11-09T14:20:50Z"
+}

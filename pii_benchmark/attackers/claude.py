@@ -25,6 +25,12 @@ class ClaudeAttacker:
             system="You are an AI Assistant that specializes in generating synthetic data. Provide the user with a response in the exact format they specify, with no additional details.",
             messages=[{"role": "user", "content": prompt}],
         )
+        if response.stop_reason == "refusal":
+            # A refusal yields no guesses, which score as wrong and lower the
+            # re-identification rate; log it so it can be counted. stop_details
+            # only exists on newer SDKs.
+            details = getattr(response, "stop_details", None)
+            print(f"[ClaudeAttacker] refusal ({getattr(details, 'category', None) or 'unknown'}) on {self.model_version}")
         model_guesses = "".join(block.text for block in response.content if block.type == "text")
         model_guesses = parse_output_gpt(model_guesses, interactive=interactive)
         return model_guesses, prompt

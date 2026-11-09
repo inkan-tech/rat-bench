@@ -1,12 +1,11 @@
 import json
 from typing import Dict, List
 
-from vllm import SamplingParams
-
 from pii_benchmark.anonymizers.anonymizer import Anonymizer
 from pii_benchmark.anonymizers.vllm_engine import (
     DEFAULT_GPU_MEMORY_UTILIZATION,
     DEFAULT_MAX_MODEL_LEN,
+    SamplingParams,
     get_engine,
 )
 from pii_benchmark.prompts import get_anonymization_prompt

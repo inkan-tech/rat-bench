@@ -38,6 +38,18 @@ python -m spacy download en_core_web_sm
 
 If you would need anonymizers also for other languages, repeat the same process to download `es_core_news_lg`(Spanish) and `zh_core_web_lg`(Chinese).
 
+### Apple Silicon (MLX)
+
+vLLM needs CUDA, so `uv sync` fails on macOS. On Apple Silicon, the Llama anonymizers (`llama_*`) run on [MLX](https://github.com/ml-explore/mlx-lm) instead. Install every dependency except vLLM and the CUDA packages, then add `mlx-lm`:
+
+```bash
+uv export --frozen --no-hashes --no-emit-project \
+  | grep -vE "^(vllm|nvidia-cudnn-frontend|nvidia-cutlass-dsl|flashinfer-python|cupy-cuda12x|cuda-[a-z-]+)==" > requirements-mac.txt
+uv venv && uv pip install -r requirements-mac.txt mlx-lm
+```
+
+The backend is chosen automatically (`mlx` on Apple Silicon, `vllm` elsewhere); force it with `RATBENCH_LLM_BACKEND=mlx|vllm`. The default checkpoint is `mlx-community/Meta-Llama-{llama_version}-bf16` (bf16, as vLLM uses on recent GPUs, ~16 GB). Set `RATBENCH_MLX_MODEL` to use another one, e.g. a `-4bit` variant. MLX runs prompts one after the other, so it is slower than vLLM batching.
+
 Copy ``pii_benchmark/credentials_example.py`` → ``pii_benchmark/credentials.py``.
 
 Add your API keys inside ``credentials.py``.

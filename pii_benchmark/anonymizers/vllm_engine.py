@@ -10,10 +10,30 @@ exactly that, and both want the same checkpoint anyway, so they take one
 engine from here instead of each constructing their own.
 """
 
-from typing import Dict, Tuple
+import os
+import platform
+from dataclasses import dataclass
+from types import SimpleNamespace
+from typing import Dict, List, Tuple
 
 import torch
-from vllm import LLM
+
+# Apple Silicon has no CUDA, so vLLM cannot run there; use MLX (mlx-lm) instead.
+# Force a backend with RATBENCH_LLM_BACKEND=mlx|vllm.
+BACKEND = os.environ.get("RATBENCH_LLM_BACKEND") or (
+    "mlx" if platform.system() == "Darwin" and platform.machine() == "arm64" else "vllm"
+)
+
+if BACKEND == "vllm":
+    from vllm import LLM, SamplingParams
+else:
+    LLM = None
+
+    @dataclass
+    class SamplingParams:
+        """The subset of vllm.SamplingParams the anonymizers use."""
+        temperature: float = 0.0
+        max_tokens: int = 16
 
 # Llama 3.1 advertises a 131072 context, which makes vLLM reserve ~16 GiB of
 # KV cache and fail to start on a 32GB V100. Measured worst case across the
@@ -25,7 +45,36 @@ DEFAULT_MAX_MODEL_LEN = 8192
 # contention while staying well above what this model actually needs.
 DEFAULT_GPU_MEMORY_UTILIZATION = 0.6
 
-_ENGINES: Dict[Tuple[str, str, int, int], LLM] = {}
+_ENGINES: Dict[Tuple[str, str, int, int], "LLM"] = {}
+
+
+class MLXEngine:
+    """mlx-lm stand-in for vllm.LLM: same chat() call, same output shape.
+
+    Prompts run one after the other (no continuous batching). bf16 weights by
+    default, as vLLM uses on Ampere and newer; override the checkpoint with
+    RATBENCH_MLX_MODEL (e.g. a -4bit variant to save memory).
+    """
+
+    def __init__(self, model_version: str):
+        from mlx_lm import load
+
+        repo = os.environ.get("RATBENCH_MLX_MODEL") or f"mlx-community/Meta-Llama-{model_version}-bf16"
+        self.model, self.tokenizer = load(repo)
+
+    def chat(self, conversations, sampling_params: SamplingParams) -> List[SimpleNamespace]:
+        from mlx_lm import generate
+        from mlx_lm.sample_utils import make_sampler
+
+        sampler = make_sampler(temp=sampling_params.temperature)
+        results = []
+        for chat in conversations:
+            prompt = self.tokenizer.apply_chat_template(chat, add_generation_prompt=True)
+            text = generate(self.model, self.tokenizer, prompt=prompt,
+                            max_tokens=sampling_params.max_tokens, sampler=sampler)
+            # Same shape as a vLLM RequestOutput: outputs[0].text
+            results.append(SimpleNamespace(outputs=[SimpleNamespace(text=text)]))
+        return results
 
 
 def engine_dtype() -> str:
@@ -53,6 +102,12 @@ def get_engine(
     the memory pool rather than changing the model, so the first caller's
     value applies and later callers share that pool.
     """
+    if BACKEND == "mlx":
+        key = (model_version, "mlx", 1, max_model_len)
+        if key not in _ENGINES:
+            _ENGINES[key] = MLXEngine(model_version)
+        return _ENGINES[key]
+
     if tensor_parallel_size is None:
         tensor_parallel_size = max(1, torch.cuda.device_count())
 

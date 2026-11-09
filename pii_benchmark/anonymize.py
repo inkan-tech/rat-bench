@@ -99,7 +99,7 @@ def _run_anonymizer_batched(anonymizer, profiles, output_key, output_file, timin
 # Anonymization main function
 def run_anonymization(profiles: List[dict], anon_methods:List[str], results_path:str, scenario:str, language:str, level:int,
                       gemini_version:str|None=None, llama_version:str|None=None, gpt_version:str|None=None, anthropic_version:str|None=None,
-                      epsilon:int|None=None, temperature:int|None=None, attribute_list_iterative:str|None=None,
+                      claude_code_version:str|None=None, epsilon:int|None=None, temperature:int|None=None, attribute_list_iterative:str|None=None,
                       timing_flag:bool=True, utility_flag:bool=True):
     print("Anonymizing")
     print(f"Will save results to {results_path}")
@@ -116,6 +116,7 @@ def run_anonymization(profiles: List[dict], anon_methods:List[str], results_path
             temperature=temperature,
             attribute_list_iterative=attribute_list_iterative,
             anthropic_version=anthropic_version,
+            claude_code_version=claude_code_version,
             language=language
         )
         if anon_method not in ["llama_basic", "llama_full", "llama", "llama_clio"]
@@ -261,6 +262,7 @@ if __name__ == "__main__":
     parser.add_argument("--llama_version", type=str, default="3.1-8B-Instruct")
     parser.add_argument("--gpt_version", type=str, default="gpt-4o-mini")
     parser.add_argument("--anthropic_version", type=str, default="claude-haiku-4-5-20251001")
+    parser.add_argument("--claude_code_version", type=str, default="haiku")
     parser.add_argument("--epsilon", type=float, default=10.0)
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--anon_methods", type=str, default=None)
@@ -304,6 +306,7 @@ if __name__ == "__main__":
         llama_version=LLAMA_VERSION,
         gpt_version=GPT_VERSION,
         anthropic_version=ANTHROPIC_VERSION,
+        claude_code_version=args.claude_code_version,
         epsilon=EPSILON,
         temperature=TEMPERATURE,
         attribute_list_iterative=args.attribute_list,

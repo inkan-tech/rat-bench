@@ -30,6 +30,7 @@ parser.add_argument("--utility_flag", type=str2bool, default=False)
 parser.add_argument("--gemini_version", type=str, default="2.5-flash")
 parser.add_argument("--llama_version", type=str, default="3.1-8B-Instruct")
 parser.add_argument("--gpt_version", type=str, default="gpt-4o-mini")
+parser.add_argument("--claude_code_version", type=str, default="haiku")
 parser.add_argument("--epsilon", type=float, default=10.0)
 parser.add_argument("--temperature", type=float, default=1.0)
 parser.add_argument("--language", type=str, default="English")
@@ -100,7 +101,7 @@ if __name__=="__main__":
     if ANONYMIZE:
         run_anonymization(profiles=profiles, anon_methods=ANON_METHODS, results_path=PATH_TO_SAVE,
                           scenario=SCENARIO, level=LEVEL, gemini_version=GEMINI_VERSION, llama_version=LLAMA_VERSION, gpt_version=GPT_VERSION,
-                          epsilon=EPSILON, temperature=TEMPERATURE, attribute_list_iterative=ATTRIBUTE_LIST_ITERATIVE,
+                          claude_code_version=args.claude_code_version, epsilon=EPSILON, temperature=TEMPERATURE, attribute_list_iterative=ATTRIBUTE_LIST_ITERATIVE,
                           timing_flag=TIMING_FLAG, utility_flag=UTILITY_FLAG, language=LANGUAGE)
             
     ############################## ATTACK ##############################

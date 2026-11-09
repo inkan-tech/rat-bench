@@ -22,6 +22,11 @@ def get_attacker(attacker, model_version):
         case "llama":
             print("Llama attacker")
             return LlamaAttacker(**kwargs)
+        case "mlx":
+            from pii_benchmark.attackers.mlx import MlxAttacker
+
+            print("MLX attacker")
+            return MlxAttacker(**kwargs)
         case "gpt":
             print("GPT attacker")
             return GPTAttacker(**kwargs)
@@ -29,4 +34,4 @@ def get_attacker(attacker, model_version):
             print("Claude attacker")
             return ClaudeAttacker(**kwargs)
         case _:
-            raise ValueError(f"Unknown attacker: {attacker!r}. Valid options: deepseek, gemini, llama, gpt, claude")
+            raise ValueError(f"Unknown attacker: {attacker!r}. Valid options: deepseek, gemini, llama, mlx, gpt, claude")

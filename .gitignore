@@ -1,2 +1,4 @@
 credentials.py
 __pycache__/
+benchmark/
+data/pums/pums_pwgtp_sample_.csv

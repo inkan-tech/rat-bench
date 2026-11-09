@@ -131,7 +131,7 @@ pums_cols = [
     "zip code"
 ]
 
-PUMS_DF = pd.read_csv("/data/natasa/pii_benchmark/data/pums/pums_pwgtp_sample_.csv")
+PUMS_DF = pd.read_csv("data/pums/pums_pwgtp_sample_.csv")
 N = 309349689 
 print("data loaded")
 
@@ -496,7 +496,7 @@ def compute_reid_risk(
         n = NL_N
         active_cols = nl_cols
     else:
-        df = pd.read_csv("/data/natasa/pii_benchmark/data/pums/pums_pwgtp_sample_.csv")
+        df = PUMS_DF
         n = 306169200
         active_cols = pums_cols
 

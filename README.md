@@ -128,6 +128,38 @@ A full run of the pipeline for one difficulty level, from generation to re-ident
 2. `sh scripts/anonymize/level_1.sh`
 3. `sh scripts/attack/level_1.sh`
 
+# 🤖 Running RAT-Bench with Claude Code (CLI)
+
+The anonymizers and the attacker can also call Claude through the [Claude Code](https://docs.claude.com/en/docs/claude-code) CLI (`claude -p`) instead of the Anthropic API. No `anthropic_api_key` in `credentials.py` is needed.
+
+Each call is isolated so that it measures the model, not the local setup: no tools, no MCP servers, no user or project settings (`CLAUDE.md`, hooks, plugins), no saved session, and an empty working directory. A failed call raises an error and is retried; an error message is never saved as an anonymized text or an attacker guess.
+
+Notes:
+
+- `ANTHROPIC_API_KEY` set: calls run in `--bare` mode (minimal context).
+- `ANTHROPIC_API_KEY` not set: calls use the logged-in Claude Code account. The model context then also holds the account email, the date and environment details (none of them come from the benchmark profiles).
+- Attacker model: `haiku` often refuses to guess (3 of 3 tries on an anonymized level 1 text); a refusal scores as a failed attack and makes the anonymizer look better. `opus` answered 2 of 2. A warning is printed for each answer with no guesses.
+- With `--timing=1`, times include the start of one `claude` process per call. Do not compare them with the API anonymizers.
+
+Prerequisites: `claude` on `PATH` (or set `CLAUDE_CODE_BIN`), and `claude` logged in.
+
+| Name | Type | Prompt (same as the `anthropic_*` method) |
+| --- | --- | --- |
+| `claude_code_basic` | anonymizer | `anthropic` |
+| `claude_code_full` | anonymizer | `anthropic_attributes`, 15 attributes |
+| `claude_code_public` | anonymizer | `public_info` |
+| `claude_code_rescriber` | anonymizer | `rescriber` |
+| `claude_code_clio` | anonymizer | `clio` |
+| `claude_code` | attacker | same as the `claude` attacker |
+
+The model is set with `--claude_code_version` (anonymizers, default `haiku`) and `--model_version` (attacker, default `opus`). Aliases such as `haiku` or `opus` move to newer models over time: give a full model id (e.g. `claude-haiku-5-5`) for reproducible results.
+
+```bash
+# put the benchmark in benchmark/level_{LEVEL}.jsonl (e.g. from the Hugging Face dataset), then:
+sh scripts/anonymize/claude_code.sh 1 haiku   # level, anonymizer model
+sh scripts/attack/claude_code.sh 1 opus       # level, attacker model
+```
+
 # References
 
 If you found our work useful for your research, kindly cite our paper: 

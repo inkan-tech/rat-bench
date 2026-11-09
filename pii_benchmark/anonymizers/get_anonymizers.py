@@ -4,6 +4,7 @@ from pii_benchmark.anonymizers.anonymizer import Anonymizer
 from pii_benchmark.anonymizers.anthropic import AnthropicAnonymizer
 from pii_benchmark.anonymizers.anthropic import AnthropicAnonymizer
 from pii_benchmark.anonymizers.azure import AzureAnonymizer
+from pii_benchmark.anonymizers.claude_code import ClaudeCodeAnonymizer
 from pii_benchmark.anonymizers.euguardrail import EUGuardrailAnonymizer
 from pii_benchmark.anonymizers.gemini import GeminiAnonymizer
 from pii_benchmark.anonymizers.gliner import GlinerAnonymizer
@@ -69,6 +70,19 @@ def get_anonymizer(method: str, attributes: List[str]=None, **kwargs) -> Anonymi
             return AnthropicAnonymizer(attributes=None, prompt_type="rescriber", model_version=kwargs["anthropic_version"])
         case "anthropic_clio":
             return AnthropicAnonymizer(attributes=None, prompt_type="clio", model_version=kwargs["anthropic_version"])
+        case "claude_code_basic":
+            return ClaudeCodeAnonymizer(attributes=None, prompt_type="anthropic", model_version=kwargs.get("claude_code_version") or "haiku")
+        case "claude_code_full":
+            return ClaudeCodeAnonymizer(attributes=["SSN", "phone number", "credit card number", "email", "name", "address", \
+                                            "race", "citizenship status", "educational attainment", "state of residence", "occupation", \
+                                            "marital status", "employment status", "date of birth", "age"], model_version=kwargs.get("claude_code_version") or "haiku",
+                                    prompt_type="anthropic_attributes")
+        case "claude_code_public":
+            return ClaudeCodeAnonymizer(attributes=None, prompt_type="public_info", model_version=kwargs.get("claude_code_version") or "haiku")
+        case "claude_code_rescriber":
+            return ClaudeCodeAnonymizer(attributes=None, prompt_type="rescriber", model_version=kwargs.get("claude_code_version") or "haiku")
+        case "claude_code_clio":
+            return ClaudeCodeAnonymizer(attributes=None, prompt_type="clio", model_version=kwargs.get("claude_code_version") or "haiku")
         case "azure":
             return AzureAnonymizer()
         case "azure_es":

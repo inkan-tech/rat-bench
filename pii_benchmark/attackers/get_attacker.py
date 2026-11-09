@@ -1,4 +1,5 @@
 from pii_benchmark.attackers.claude import ClaudeAttacker
+from pii_benchmark.attackers.claude_code import ClaudeCodeAttacker
 from pii_benchmark.attackers.deepseek import DeepSeekAttacker
 from pii_benchmark.attackers.gemini import GeminiAttacker
 from pii_benchmark.attackers.gpt import GPTAttacker
@@ -28,5 +29,8 @@ def get_attacker(attacker, model_version):
         case "claude":
             print("Claude attacker")
             return ClaudeAttacker(**kwargs)
+        case "claude_code":
+            print("Claude Code attacker")
+            return ClaudeCodeAttacker(**kwargs)
         case _:
-            raise ValueError(f"Unknown attacker: {attacker!r}. Valid options: deepseek, gemini, llama, gpt, claude")
+            raise ValueError(f"Unknown attacker: {attacker!r}. Valid options: deepseek, gemini, llama, gpt, claude, claude_code")

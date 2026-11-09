@@ -1,14 +1,15 @@
 import json
 from typing import Dict, List
 
-from vllm import SamplingParams
-
 from pii_benchmark.anonymizers.anonymizer import Anonymizer
-from pii_benchmark.anonymizers.vllm_engine import (
+from pii_benchmark.backend import load_engine
+
+(
+    SamplingParams,
     DEFAULT_GPU_MEMORY_UTILIZATION,
     DEFAULT_MAX_MODEL_LEN,
     get_engine,
-)
+) = load_engine()
 from pii_benchmark.prompts import get_anonymization_prompt
 
 # Rescriber emits only a JSON entity list; worst case measured on the 300

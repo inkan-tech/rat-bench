@@ -21,6 +21,11 @@ class ClaudeAttacker:
     Each call runs `claude -p` with the attack system prompt, no tools, no
     settings or MCP servers, from an empty directory so no CLAUDE.md is read.
     Claude Code still attaches the account context (the user's email).
+
+    Thinking is off and output is capped at 4096 tokens, to match the API
+    call this replaces (claude-opus-4-8, no thinking parameter, max_tokens
+    4096); effort stays at the model's default, high. Without this the CLI
+    thinks on attack prompts (checked with stream-json).
     """
 
     def __init__(self, model_version: str = "claude-opus-4-8"):
@@ -31,6 +36,8 @@ class ClaudeAttacker:
         cmd = [
             "claude", "-p",
             "--model", self.model_version,
+            "--effort", "high",
+            "--settings", '{"alwaysThinkingEnabled": false}',
             "--system-prompt", SYSTEM_PROMPT,
             "--tools", "",
             "--setting-sources", "",
@@ -42,6 +49,7 @@ class ClaudeAttacker:
             proc = subprocess.run(
                 cmd, input=prompt, capture_output=True, text=True,
                 cwd=self.workdir, timeout=900,
+                env={**os.environ, "MAX_THINKING_TOKENS": "0", "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "4096"},
             )
         if proc.returncode != 0:
             raise RuntimeError(f"claude CLI exit {proc.returncode}: {(proc.stderr or proc.stdout)[-500:]}")

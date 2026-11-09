@@ -134,10 +134,10 @@ The anonymizers and the attacker can also call Claude through the [Claude Code](
 
 Each call is isolated so that it measures the model, not the local setup: no tools, no MCP servers, no user or project settings (`CLAUDE.md`, hooks, plugins), no saved session, and an empty working directory. A failed call raises an error and is retried; an error message is never saved as an anonymized text or an attacker guess.
 
-⚠️ Auth and context:
+Notes:
 
-- `ANTHROPIC_API_KEY` set: calls run in `--bare` mode, and no account context reaches the model. Use this for results you publish.
-- `ANTHROPIC_API_KEY` not set: calls use the logged-in Claude Code account. Claude Code then adds the account email, the date and environment details to the model context, and `--bare` cannot be used. Email is a scored identifier, so these runs are biased. A warning is printed.
+- `ANTHROPIC_API_KEY` set: calls run in `--bare` mode (minimal context).
+- `ANTHROPIC_API_KEY` not set: calls use the logged-in Claude Code account. The model context then also holds the account email, the date and environment details (none of them come from the benchmark profiles).
 - Attacker model: `haiku` often refuses to guess (3 of 3 tries on an anonymized level 1 text); a refusal scores as a failed attack and makes the anonymizer look better. `opus` answered 2 of 2. A warning is printed for each answer with no guesses.
 - With `--timing=1`, times include the start of one `claude` process per call. Do not compare them with the API anonymizers.
 

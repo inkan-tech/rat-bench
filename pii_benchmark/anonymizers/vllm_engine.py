@@ -10,6 +10,7 @@ exactly that, and both want the same checkpoint anyway, so they take one
 engine from here instead of each constructing their own.
 """
 
+import os
 from typing import Dict, Tuple
 
 import torch
@@ -23,7 +24,11 @@ DEFAULT_MAX_MODEL_LEN = 8192
 # 0.90 leaves ~0 margin for any other job on a shared GPU. 8B weights only
 # need ~16GB and max_model_len caps the KV cache, so 0.6 tolerates real-world
 # contention while staying well above what this model actually needs.
-DEFAULT_GPU_MEMORY_UTILIZATION = 0.6
+# On a 24GB card 0.6 is 14.4GB, below the bf16 weights, so a dedicated pod
+# (scripts/runpod/launch.sh) raises it through VLLM_GPU_MEMORY_UTILIZATION.
+DEFAULT_GPU_MEMORY_UTILIZATION = float(
+    os.environ.get("VLLM_GPU_MEMORY_UTILIZATION", "0.6")
+)
 
 _ENGINES: Dict[Tuple[str, str, int, int], LLM] = {}
 

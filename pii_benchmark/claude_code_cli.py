@@ -7,6 +7,12 @@ import tempfile
 # Claude Code CLI binary; override with CLAUDE_CODE_BIN if it is not on PATH.
 CLAUDE_BIN = os.environ.get("CLAUDE_CODE_BIN", "claude")
 
+# With an API key, run in --bare mode: no account context reaches the model.
+# Without one (logged-in account, OAuth), Claude Code adds the account email and
+# environment details to the context, and --bare cannot be used.
+BARE = bool(os.environ.get("ANTHROPIC_API_KEY"))
+_warned = False
+
 
 class ClaudeCodeError(RuntimeError):
     pass
@@ -17,17 +23,24 @@ def run_claude_code(prompt: str, system_prompt: str, model: str = "haiku", timeo
 
     The call is isolated so the benchmark measures the model and not the local setup:
     no tools, no MCP servers, no user/project settings (CLAUDE.md, hooks, plugins),
-    no saved session. Auth comes from the logged-in Claude Code account
-    (or ANTHROPIC_API_KEY if set).
+    no saved session. Auth comes from ANTHROPIC_API_KEY (--bare mode) if set,
+    else from the logged-in Claude Code account (see BARE).
 
     Raises ClaudeCodeError on any failure, so an error string is never saved
     as an anonymized text or an attacker answer.
     """
+    global _warned
     if shutil.which(CLAUDE_BIN) is None:
         raise ClaudeCodeError(f"Claude Code CLI not found: {CLAUDE_BIN!r}")
+    if not BARE and not _warned:
+        print("WARNING: ANTHROPIC_API_KEY not set. Claude Code runs on the logged-in account and adds "
+              "the account email and environment details to the model context. Set ANTHROPIC_API_KEY "
+              "for clean (--bare) runs.")
+        _warned = True
 
     cmd = [
         CLAUDE_BIN, "-p",
+        *(["--bare"] if BARE else []),
         "--model", model,
         "--system-prompt", system_prompt,
         "--tools", "",

@@ -130,9 +130,16 @@ A full run of the pipeline for one difficulty level, from generation to re-ident
 
 # 🤖 Running RAT-Bench with Claude Code (CLI)
 
-The anonymizers and the attacker can also call Claude through the [Claude Code](https://docs.claude.com/en/docs/claude-code) CLI (`claude -p`) instead of the Anthropic API. No `anthropic_api_key` is needed: the calls use the account Claude Code is logged in with (or `ANTHROPIC_API_KEY` if it is set).
+The anonymizers and the attacker can also call Claude through the [Claude Code](https://docs.claude.com/en/docs/claude-code) CLI (`claude -p`) instead of the Anthropic API. No `anthropic_api_key` in `credentials.py` is needed.
 
 Each call is isolated so that it measures the model, not the local setup: no tools, no MCP servers, no user or project settings (`CLAUDE.md`, hooks, plugins), no saved session, and an empty working directory. A failed call raises an error and is retried; an error message is never saved as an anonymized text or an attacker guess.
+
+⚠️ Auth and context:
+
+- `ANTHROPIC_API_KEY` set: calls run in `--bare` mode, and no account context reaches the model. Use this for results you publish.
+- `ANTHROPIC_API_KEY` not set: calls use the logged-in Claude Code account. Claude Code then adds the account email, the date and environment details to the model context, and `--bare` cannot be used. Email is a scored identifier, so these runs are biased. A warning is printed.
+- Attacker model: `haiku` often refuses to guess (3 of 3 tries on an anonymized level 1 text); a refusal scores as a failed attack and makes the anonymizer look better. `opus` answered 2 of 2. A warning is printed for each answer with no guesses.
+- With `--timing=1`, times include the start of one `claude` process per call. Do not compare them with the API anonymizers.
 
 Prerequisites: `claude` on `PATH` (or set `CLAUDE_CODE_BIN`), and `claude` logged in.
 

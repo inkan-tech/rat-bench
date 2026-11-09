@@ -76,6 +76,46 @@ class MlxEngine:
         # attack.py calls infer from a thread pool; MLX generation is not
         # thread-safe, so requests are serialized here.
         self._lock = threading.Lock()
+        # Single requests waiting for submit() to batch them.
+        self._queue: List[list] = []
+        self._queue_lock = threading.Lock()
+
+    def submit(
+        self, chat: List[Dict[str, str]], sampling_params: SamplingParams
+    ) -> _RequestOutput:
+        """Generate one conversation, batched with the others waiting.
+
+        Callers that each send one conversation from their own thread (the
+        attack thread pool) are grouped into one chat() call: whoever gets the
+        engine runs every queued request with the same sampling parameters.
+        """
+        item = [chat, sampling_params, threading.Event(), None, None]
+        with self._queue_lock:
+            self._queue.append(item)
+        while not item[2].is_set():
+            if not self._lock.acquire(blocking=False):
+                item[2].wait(0.05)
+                continue
+            try:
+                with self._queue_lock:
+                    params = self._queue[0][1] if self._queue else None
+                    batch = [it for it in self._queue if it[1] == params]
+                    self._queue = [it for it in self._queue if it[1] != params]
+                if batch:
+                    try:
+                        outputs = self._chat([it[0] for it in batch], params)
+                        for it, output in zip(batch, outputs):
+                            it[3] = output
+                    except Exception as e:
+                        for it in batch:
+                            it[4] = e
+                    for it in batch:
+                        it[2].set()
+            finally:
+                self._lock.release()
+        if item[4] is not None:
+            raise item[4]
+        return item[3]
 
     def chat(
         self, conversations: List[List[Dict[str, str]]], sampling_params: SamplingParams

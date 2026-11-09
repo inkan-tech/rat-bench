@@ -27,8 +27,10 @@ class MlxAttacker:
             {"role": "user", "content": prompt},
         ]
 
-        outputs = self.model.chat(
-            [chat], SamplingParams(temperature=0.0, max_tokens=4096)
+        # submit() batches this call with the ones other attack threads are
+        # sending at the same time.
+        output = self.model.submit(
+            chat, SamplingParams(temperature=0.0, max_tokens=4096)
         )
-        model_guesses = parse_output_gpt(outputs[0].outputs[0].text, interactive=interactive)
+        model_guesses = parse_output_gpt(output.outputs[0].text, interactive=interactive)
         return model_guesses, prompt

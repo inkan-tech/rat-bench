@@ -1,8 +1,11 @@
+import os
 from typing import List
 
 from pii_benchmark.mlx_engine import SamplingParams, get_engine
 from pii_benchmark.prompts import get_staab_prompt
 from pii_benchmark.utils import parse_output_gpt
+
+BATCH = os.environ.get("MLX_ATTACK_BATCH") == "1"
 
 
 class MlxAttacker:
@@ -27,10 +30,13 @@ class MlxAttacker:
             {"role": "user", "content": prompt},
         ]
 
-        # submit() batches this call with the ones other attack threads are
-        # sending at the same time.
-        output = self.model.submit(
-            chat, SamplingParams(temperature=0.0, max_tokens=4096)
-        )
+        sampling = SamplingParams(temperature=0.0, max_tokens=4096)
+        if BATCH:
+            # Batched with the calls other attack threads send at the same
+            # time: ~20% faster, but 4 of 20 guess sets differed from the
+            # one-at-a-time run on level 1, so it is opt-in.
+            output = self.model.submit(chat, sampling)
+        else:
+            output = self.model.chat([chat], sampling)[0]
         model_guesses = parse_output_gpt(output.outputs[0].text, interactive=interactive)
         return model_guesses, prompt

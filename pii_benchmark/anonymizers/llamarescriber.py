@@ -2,6 +2,7 @@ import json
 from typing import Dict, List
 
 from pii_benchmark.anonymizers.anonymizer import Anonymizer
+from pii_benchmark.anonymizers.llama import chat_in_order
 from pii_benchmark.backend import load_engine
 
 (
@@ -100,9 +101,9 @@ class LlamaRescriberAnonymizer(Anonymizer):
             for i, text in enumerate(texts)
         ]
 
-        outputs = self.model.chat(conversations, self.sampling_params)
+        outputs = chat_in_order(self.model, conversations, self.sampling_params)
 
-        # vLLM returns results in submission order.
+        # Results come back in submission order.
         return [
             self._redact(text, output.outputs[0].text)
             for text, output in zip(texts, outputs)

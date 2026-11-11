@@ -2,10 +2,11 @@
 
 It mirrors the slice of the vLLM API this repo uses (``get_engine``,
 ``SamplingParams`` and ``LLM.chat``), so the Llama anonymizers run unchanged.
-Several conversations passed to ``chat`` are generated as one batch.
+Several conversations passed to ``chat`` are generated as one batch; the
+anonymizers call it with one conversation at a time unless MLX_ANON_BATCH=1.
 
-Only one process may hold the model at a time: it takes ~9GB of unified
-memory, and the machine must stay usable while a run is going.
+Only one process may hold the model at a time: it takes ~9GB (8-bit) or ~16GB
+(bf16) of unified memory, and the machine must stay usable while a run is going.
 """
 
 import fcntl
@@ -28,7 +29,22 @@ BATCH_SIZE = int(os.environ.get("MLX_BATCH_SIZE", "4"))
 
 MLX_REPOS = {
     "3.1-8B-Instruct": "mlx-community/Meta-Llama-3.1-8B-Instruct-8bit",
+    # Full precision, as in the paper: ~16GB of weights.
+    "3.1-8B-Instruct-bf16": "mlx-community/Meta-Llama-3.1-8B-Instruct-bf16",
 }
+
+# MLX_LLAMA_REPO=<repo> replaces the checkpoint of "3.1-8B-Instruct", so the
+# bf16 model runs through the usual entry points without a code change.
+LLAMA_REPO_ENV = "MLX_LLAMA_REPO"
+
+def resolve_repo(model_version: str) -> str:
+    if model_version not in MLX_REPOS:
+        raise ValueError(
+            f"No MLX checkpoint for {model_version!r}. Known: {sorted(MLX_REPOS)}"
+        )
+    if model_version == "3.1-8B-Instruct" and os.environ.get(LLAMA_REPO_ENV):
+        return os.environ[LLAMA_REPO_ENV]
+    return MLX_REPOS[model_version]
 
 LOCK_PATH = os.path.join(tempfile.gettempdir(), "rat-bench-mlx.lock")
 
@@ -168,11 +184,8 @@ def get_engine(
     tensor_parallel_size, gpu_memory_utilization and max_model_len exist only
     for signature parity with vllm_engine.get_engine and are ignored.
     """
-    if model_version not in MLX_REPOS:
-        raise ValueError(
-            f"No MLX checkpoint for {model_version!r}. Known: {sorted(MLX_REPOS)}"
-        )
-    if model_version not in _ENGINES:
+    repo = resolve_repo(model_version)
+    if repo not in _ENGINES:
         _acquire_process_lock()
-        _ENGINES[model_version] = MlxEngine(MLX_REPOS[model_version])
-    return _ENGINES[model_version]
+        _ENGINES[repo] = MlxEngine(repo)
+    return _ENGINES[repo]

@@ -1,10 +1,11 @@
 import json
+import os
 from typing import Dict, List
 
 import torch
 from tqdm import tqdm
 from pii_benchmark.anonymizers.anonymizer import Anonymizer
-from pii_benchmark.backend import load_engine
+from pii_benchmark.backend import get_backend, load_engine
 
 (
     SamplingParams,
@@ -20,6 +21,20 @@ MAX_OUTPUT_TOKENS_RESCRIBER = 2048
 MAX_OUTPUT_TOKENS = 4096
 
 MAX_MODEL_LEN = DEFAULT_MAX_MODEL_LEN
+
+
+def chat_in_order(model, conversations, sampling_params):
+    """Run engine.chat over conversations, results in submission order.
+
+    On MLX, each conversation gets its own generate call (batched generation
+    can change the text) unless MLX_ANON_BATCH=1, MLX_BATCH=1 or
+    MLX_ATTACK_BATCH=1. vLLM always gets the whole batch.
+    """
+    if get_backend() != "mlx" or any(
+        os.environ.get(v) == "1" for v in ("MLX_ANON_BATCH", "MLX_BATCH", "MLX_ATTACK_BATCH")
+    ):
+        return model.chat(conversations, sampling_params)
+    return [model.chat([chat], sampling_params)[0] for chat in conversations]
 
 
 def _pipeline_dtype():
@@ -117,9 +132,9 @@ class LlamaAnonymizer(Anonymizer):
 
         conversations = [self._build_chat(pt, text, atts) for text in texts]
         sampling_params = SamplingParams(temperature=0.0, max_tokens=MAX_OUTPUT_TOKENS)
-        outputs = self.model.chat(conversations, sampling_params)
+        outputs = chat_in_order(self.model, conversations, sampling_params)
 
-        # vLLM returns results in submission order.
+        # Results come back in submission order.
         return [output.outputs[0].text for output in outputs]
 
     def anonymize_rescriber(self, text: str, scenario: str = "") -> str:

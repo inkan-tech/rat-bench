@@ -1,0 +1,18 @@
+{
+  "input": "benchmark/attacker_qwen35/level_1.jsonl",
+  "attacker": "qwen35",
+  "results_pickle": "benchmark/attacker_qwen35_rescore/results/medical/level_1_attacker_qwen35.pickle",
+  "rates": {
+    "presidio": 0.34,
+    "gliner": 0.63,
+    "scrubadub": 0.53,
+    "llama_basic": 0.42
+  },
+  "reference_rates": {
+    "presidio": 0.33,
+    "gliner": 0.63,
+    "scrubadub": 0.53,
+    "llama_basic": 0.42
+  },
+  "note": "Correctness (n_correct_atts, correct_direct_ids) is identical to the original run for all 4 methods. CorrectMatch fit/sampling is unseeded (Julia RNG), so per-profile correctness varies between runs. Presidio profile 95 moved from 0.194 to 0.213, across the 0.2 threshold: 0.33 -> 0.34. Gliner had 2 profiles cross up and 2 down (net 0)."
+}

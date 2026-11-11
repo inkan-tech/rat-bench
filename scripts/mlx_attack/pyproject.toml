@@ -1,0 +1,15 @@
+[project]
+name = "rat-bench-mlx-attack"
+version = "0.1.0"
+description = "MLX attacker guess generator (mlx-lm 0.32.2 needs transformers 5, kept apart from the benchmark venv)"
+requires-python = ">=3.11"
+dependencies = [
+    "mlx-lm==0.32.2",
+    # imported by pii_benchmark.prompts / pii_benchmark.utils
+    "nltk",
+    "levenshtein",
+    "datasets",
+]
+
+[tool.uv]
+package = false

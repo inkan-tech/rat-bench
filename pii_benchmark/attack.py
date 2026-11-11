@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from pii_benchmark.attackers.get_attacker import get_attacker
 from pii_benchmark.evaluation import check_guess_correctness
+from pii_benchmark.run_info import collect_run_info, mlx_repo_for
 from synthetic_data_generation.utils import write_output_async as write_output
 from pii_benchmark.uniqueness import compute_reid_risk
 
@@ -114,6 +115,8 @@ def attack(profiles, anon_methods, attacker_name, model_version, scenario,
 
     attacker = get_attacker(attacker_name, model_version)
     suff = key_suffix if key_suffix is not None else attacker_name
+    # What produced the guesses (model repo/revision, mlx-lm, claude CLI, git commit).
+    run_info = collect_run_info(model_repo=mlx_repo_for(model_version or getattr(attacker, "model_version", None)))
 
     # print(f"Starting attack, language = {language}")
     # print(f"language or English = {language or 'English'}")
@@ -175,6 +178,7 @@ def attack(profiles, anon_methods, attacker_name, model_version, scenario,
                         continue
                     by_id[profile_id][guess_key] = guess
                     by_id[profile_id][prompt_key] = prompt
+                    by_id[profile_id][f"run_info_attack_{anon_method}_{suff}"] = run_info
                     write_output(f"{results_path}/level_{level}.jsonl", profiles)
 
             if failed_ids:

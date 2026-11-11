@@ -8,6 +8,7 @@ from pii_benchmark.anonymizers.get_anonymizers import get_anonymizer
 import argparse
 import time
 
+from pii_benchmark.run_info import collect_run_info, mlx_repo_for
 from pii_benchmark.utility import utility_scores
 from synthetic_data_generation.utils import write_output_async as write_output
 
@@ -167,8 +168,15 @@ def run_anonymization(profiles: List[dict], anon_methods:List[str], results_path
     output_file = output_base if output_base.suffix == ".jsonl" else output_base / f"level_{level}.jsonl"
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # What produced this run (model repo/revision, mlx-lm, claude CLI, git commit).
+    is_llm = lambda m: m.startswith("llama")
+    run_info = {m: collect_run_info(model_repo=mlx_repo_for(llama_version) if is_llm(m) else None)
+                for m in anon_methods}
+
     for i, method in enumerate(anon_methods):
         print(f"Anonymizing with {method}")
+        for p in profiles:
+            p[f"run_info_anon_{method}"] = run_info[method]
 
         # if f"text_anon_{method}" in profiles[0]:
         #     print(f"Skipping {method} because it already exists in the profiles")

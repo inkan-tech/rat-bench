@@ -3,10 +3,23 @@ from pathlib import Path
 import pickle
 import json
 from typing import List
+import os
 import correctmatch
+from juliacall import Main as jl
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
+
+# CorrectMatch fits and samples with Julia's global RNG. Seeding it before each
+# fit makes a scoring run reproducible. CORRECTMATCH_SEED overrides the default.
+DEFAULT_CORRECTMATCH_SEED = 42
+jl.seval("using Random")
+
+
+def _seed_correctmatch() -> int:
+    seed = int(os.environ.get("CORRECTMATCH_SEED", DEFAULT_CORRECTMATCH_SEED))
+    jl.seval(f"Random.seed!({seed})")
+    return seed
 
 PUMS_MAPS_PATH = "./data/maps/{col}_map.pickle"
 PUMS_DOB_MAP_PATH = "./data/maps/{col}_map.pickle"
@@ -374,6 +387,7 @@ def fit_model_and_compute(cols_to_fit: List[str], record_to_analyze: List[int], 
     if n is None:
         n = N
 
+    _seed_correctmatch()
     model = correctmatch.fit_model(dff.to_numpy())
 
     correctness_list = []

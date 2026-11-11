@@ -25,6 +25,7 @@ sys.path.insert(0, ROOT)
 
 from pii_benchmark.attack import only_check_correctness  # noqa: E402
 from pii_benchmark.run_info import collect_run_info  # noqa: E402
+from pii_benchmark.uniqueness import DEFAULT_CORRECTMATCH_SEED  # noqa: E402
 
 DEFAULT_METHODS = "presidio,gliner,scrubadub,llama_basic"
 
@@ -55,7 +56,9 @@ def main():
     with open(pickle_path, "rb") as f:
         rates = {m: float(v) for m, v in pickle.load(f)["reidentification_rate"].items()}
     info = {"input": args.in_path, "attacker": args.attacker, "results_pickle": pickle_path,
-            "rates": rates, "run_info": collect_run_info()}
+            "rates": rates,
+            "correctmatch_seed": int(os.environ.get("CORRECTMATCH_SEED", DEFAULT_CORRECTMATCH_SEED)),
+            "run_info": collect_run_info()}
     with open(os.path.join(args.out, f"score_level_{args.level}_{args.attacker}.json"), "w") as f:
         json.dump(info, f, indent=2)
     print(json.dumps({"results_pickle": pickle_path, "rates": rates}, indent=2))

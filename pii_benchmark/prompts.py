@@ -224,7 +224,11 @@ def get_staab_prompt(
             if a not in ['DOB-Day', 'DOB-Month', 'DOB-Year']:
                 a_str = col_to_str(a)
                 pii_attributes += f"{a_str}, "
-                footer += f'"{a_str}" :{{\n'
+                if language in (None, "English"):
+                    # Paper-era (b8cface) key without quotes (drift D45).
+                    footer += f"{a_str} :{{ \n"
+                else:
+                    footer += f'"{a_str}" :{{\n'
                 if use_spanish:
                     footer += f"Inference: Tu inferencia detallada,\n"
                     footer += f"Guess: Tu mejor estimacion, {type_to_options(a, scenario, language=language)},\n"

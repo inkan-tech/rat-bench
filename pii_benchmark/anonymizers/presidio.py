@@ -38,10 +38,11 @@ class PresidioAnonymizer(Anonymizer):
         super().__init__()
 
         if language == "en":
-            nlp = spacy.load("en_core_web_sm")
-            loaded_nlp_engine = LoadedSpacyNlpEngine(loaded_spacy_model=nlp)
+            # Paper-era (b8cface) built an en_core_web_sm engine, then
+            # replaced it with AnalyzerEngine(), whose default NLP engine is
+            # en_core_web_lg. The paper numbers come from that (drift D31).
             self.language = language
-            self.analyzer = AnalyzerEngine(nlp_engine=loaded_nlp_engine)
+            self.analyzer = AnalyzerEngine()
             self.anonymizer = AnonymizerEngine()
 
             self.analyzer.registry.add_recognizer(titles_recognizer)

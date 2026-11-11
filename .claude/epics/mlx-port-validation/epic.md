@@ -91,3 +91,18 @@ Risk: if bf16 MLX still differs from vLLM, the port is not valid for LLM anonymi
 | 6 | 2 h | about 12 h MLX + 1 h Claude | plan quota |
 | 7 | 2 h | – | 0 |
 | 8 | 2 h | 30 min | 0 |
+
+## Tasks Created
+- [ ] 001.md - Audit code drift since the paper-era commit (parallel: true)
+- [ ] 002.md - Add the bf16 MLX anonymizer with a determinism check (parallel: true)
+- [ ] 003.md - Re-run level 1 llama_basic on bf16 MLX with the Claude attacker (parallel: false)
+- [ ] 004.md - vLLM reference run on RunPod and MLX comparison (parallel: false)
+- [ ] 005.md - Apply the drift audit's restore decisions with tests (parallel: true)
+- [ ] 006.md - Run levels 2 and 3 with the Claude attacker, 3 repeats (parallel: false)
+- [ ] 007.md - Package the MLX guess generator and record run versions (parallel: true)
+- [ ] 008.md - Document the macOS run and publish the final comparison (parallel: false)
+
+Total tasks: 8
+Parallel tasks: 4
+Sequential tasks: 4
+Estimated total effort: 12.5 hours of work, plus about 16 h of machine time

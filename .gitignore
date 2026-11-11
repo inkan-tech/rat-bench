@@ -3,3 +3,4 @@ __pycache__/
 benchmark/
 data/pums/pums_pwgtp_sample_.csv
 .env
+.claude/epics/*/loop/

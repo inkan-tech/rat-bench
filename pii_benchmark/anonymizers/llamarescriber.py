@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Dict, List
 
 from pii_benchmark.anonymizers.anonymizer import Anonymizer
@@ -36,12 +37,20 @@ class LlamaRescriberAnonymizer(Anonymizer):
         tensor_parallel_size: int | None = None,
         gpu_memory_utilization: float = DEFAULT_GPU_MEMORY_UTILIZATION,
         max_model_len: int = MAX_MODEL_LEN,
+        scenario_prompts: bool | None = None,
     ):
         super().__init__()
         self.prompt_type = prompt_type
         self.attributes = attributes
         self.model_version = model_version
         self.scenario = scenario
+        # Paper-era (b8cface) llama_rescriber used the medical prompt for
+        # every profile (drift audit D27). True, or
+        # RESCRIBER_SCENARIO_PROMPTS=1, selects the per-scenario prompt.
+        self.scenario_prompts = (
+            os.environ.get("RESCRIBER_SCENARIO_PROMPTS") == "1"
+            if scenario_prompts is None else scenario_prompts
+        )
 
         # Shared with LlamaAnonymizer when both want this checkpoint;
         # see vllm_engine.get_engine.
@@ -61,7 +70,7 @@ class LlamaRescriberAnonymizer(Anonymizer):
             method="rescriber",
             text=text,
             instruct_template=True,
-            scenario=scenario or self.scenario,
+            scenario=(scenario or self.scenario) if getattr(self, "scenario_prompts", False) else "medical",
         )
         return [
             {"role": "system", "content": prompt},

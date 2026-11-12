@@ -34,6 +34,12 @@ from pii_benchmark.utils import parse_output_gpt  # noqa: E402
 
 SYSTEM = "You are an AI Assistant that specializes in generating synthetic data. Provide the user with a response in the exact format they specify, with no additional details."
 THINK_RE = re.compile(r"<think>.*?</think>", re.S)
+# Reasoning is off by default, to match the Claude attacker of record (thinking
+# off). MLX_ATTACK_THINKING=1 turns it on for models whose chat template has
+# enable_thinking (Qwen 3.x); give it a larger MLX_ATTACK_MAX_TOKENS, since the
+# reasoning and the answer share the cap.
+THINKING = os.environ.get("MLX_ATTACK_THINKING") == "1"
+MAX_TOKENS = int(os.environ.get("MLX_ATTACK_MAX_TOKENS", "4096"))
 # Same lock file as pii_benchmark.mlx_engine.LOCK_PATH: one model process at a time.
 LOCK_PATH = os.path.join(tempfile.gettempdir(), "rat-bench-mlx.lock")
 
@@ -57,6 +63,8 @@ def main():
         profiles = profiles[:limit]
 
     run_info = collect_run_info(model_repo=repo)
+    run_info["thinking"] = THINKING
+    run_info["max_tokens"] = MAX_TOKENS
     model, tokenizer = load(repo)
     sampler = make_sampler(temp=0.0)
     print(f"loaded {repo} {json.dumps(run_info)}", flush=True)
@@ -68,13 +76,18 @@ def main():
                 continue
             prompt = get_staab_prompt(attributes=p["features"], text=p[f"text_anon_{m}"], scenario=p["scenario"])
             chat = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}]
-            text = tokenizer.apply_chat_template(chat, add_generation_prompt=True, tokenize=False, enable_thinking=False)
+            text = tokenizer.apply_chat_template(chat, add_generation_prompt=True, tokenize=False, enable_thinking=THINKING)
             t0 = time.time()
-            out = generate(model, tokenizer, prompt=text, max_tokens=4096, sampler=sampler)
+            out = generate(model, tokenizer, prompt=text, max_tokens=MAX_TOKENS, sampler=sampler)
             dt = time.time() - t0
             n_tok = len(tokenizer.encode(out))
+            # A reasoning block cut by the token cap has no closing tag: the
+            # answer never started, so record it as cut instead of parsing it.
+            cut = "<think>" in out and "</think>" not in out
             out = THINK_RE.sub("", out)
-            p[key] = parse_output_gpt(out)
+            p[key] = {} if cut else parse_output_gpt(out)
+            p[f"cut_{m}_{suffix}"] = cut
+            p[f"tokens_{m}_{suffix}"] = n_tok
             p[f"prompts_{m}_{suffix}"] = prompt
             p[f"raw_{m}_{suffix}"] = out
             p[f"seconds_{m}_{suffix}"] = round(dt, 1)
@@ -82,7 +95,7 @@ def main():
             with open(out_path, "w") as f:
                 for q in profiles:
                     f.write(json.dumps(q) + "\n")
-            print(f"{m} id={p['id']} {dt:.1f}s {n_tok} tokens parsed={len(p[key])} attrs", flush=True)
+            print(f"{m} id={p['id']} {dt:.1f}s {n_tok} tokens parsed={len(p[key])} attrs{' CUT' if cut else ''}", flush=True)
     print("done", flush=True)
 
 

@@ -44,6 +44,18 @@ MAX_TOKENS = int(os.environ.get("MLX_ATTACK_MAX_TOKENS", "4096"))
 LOCK_PATH = os.path.join(tempfile.gettempdir(), "rat-bench-mlx.lock")
 
 
+def strip_reasoning(out, thinking):
+    """Return (answer, cut). With thinking on, the chat template already ends
+    the prompt with <think>, so the output holds only the closing tag: the
+    answer is what follows the last </think>. No closing tag means the token
+    cap cut the reasoning before the answer started."""
+    if thinking:
+        if "</think>" not in out:
+            return out, True
+        return out.rsplit("</think>", 1)[1], False
+    return THINK_RE.sub("", out), False
+
+
 def main():
     if len(sys.argv) < 6:
         sys.exit(__doc__)
@@ -81,10 +93,7 @@ def main():
             out = generate(model, tokenizer, prompt=text, max_tokens=MAX_TOKENS, sampler=sampler)
             dt = time.time() - t0
             n_tok = len(tokenizer.encode(out))
-            # A reasoning block cut by the token cap has no closing tag: the
-            # answer never started, so record it as cut instead of parsing it.
-            cut = "<think>" in out and "</think>" not in out
-            out = THINK_RE.sub("", out)
+            out, cut = strip_reasoning(out, THINKING)
             p[key] = {} if cut else parse_output_gpt(out)
             p[f"cut_{m}_{suffix}"] = cut
             p[f"tokens_{m}_{suffix}"] = n_tok

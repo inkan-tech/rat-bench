@@ -1,0 +1,27 @@
+{
+  "model_repo": "mlx-community/Meta-Llama-3.1-8B-Instruct-bf16",
+  "model_revision": "f8311090f9ee47782b6f094984a20c856eb841d6",
+  "mlx_lm_version": "0.29.1",
+  "claude_cli_version": "2.1.311 (Claude Code)",
+  "git_commit": "5694180bc375e93c900b792a5992f3fe747de1f2",
+  "attacker_model": "claude-opus-4-8",
+  "n_profiles": 100,
+  "n_attack_calls": 100,
+  "refusals": 0,
+  "cut_answers": 0,
+  "call_log": "benchmark/bf16/claude_cli_calls.jsonl",
+  "call_log_window": {
+    "start": "2026-11-12T06:58:05",
+    "end": "2026-11-12T06:59:51"
+  },
+  "rate": 0.53,
+  "ci_lower": 0.42,
+  "ci_upper": 0.63,
+  "confidence": 0.95,
+  "paper_rate": 0.37,
+  "mlx_8bit_rate": 0.52,
+  "anonymization_wall_time_s": 21987.638426583,
+  "generation": "one prompt per generate call (MLX_ANON_BATCH unset), temperature 0",
+  "correctmatch_seed": 42,
+  "note": "The 8-bit value 0.52 was measured with the pre-restore attacker prompt. This bf16 run uses the restored paper-era attacker prompt (#8, D44/D45), so the bf16-vs-8-bit difference mixes the precision change and the prompt change."
+}

@@ -106,3 +106,7 @@ Total tasks: 8
 Parallel tasks: 4
 Sequential tasks: 4
 Estimated total effort: 12.5 hours of work, plus about 16 h of machine time
+
+## Results
+
+- #6 level 1 `llama_basic`, bf16 MLX anonymizer, Claude attacker (claude-opus-4-8): re-identification rate 0.53 (95% bootstrap interval 0.42 to 0.63), paper 0.37, 8-bit MLX 0.52. 100 calls, 0 refusals, 0 cut answers. The 8-bit value used the pre-restore attacker prompt; this run uses the restored paper-era prompt (#8, D44/D45). Details: `docs/results/level1_llama_basic_bf16.json`.

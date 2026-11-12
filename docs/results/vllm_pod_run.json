@@ -1,0 +1,23 @@
+{
+  "launcher": "scripts/runpod/launch.sh",
+  "launcher_commit": "c2dd716",
+  "run_name": "rat-bench-20261112063238",
+  "pod_id": "3f4k59og8uj3kq",
+  "cloud": "SECURE",
+  "gpu": "RTX 3090 (inferred: $0.50/h equals the SECURE 3090 price on 2026-11-12; the pod log does not name the card)",
+  "cost_per_hr_usd": 0.5,
+  "started_at": "2026-11-12T06:32:38Z",
+  "ended_at": "2026-11-12T06:53:13Z",
+  "duration_s": 1235,
+  "cost_usd": 0.17,
+  "cost_note": "launcher $/h x launcher wall time (upper bound, includes the failed first creation try); RunPod billing not read",
+  "cost_cap_usd": 5,
+  "pod_deleted": true,
+  "pod_deleted_evidence": "launch.sh printed 'Pod 3f4k59og8uj3kq deleted' (API DELETE succeeded); RunPod console not checked",
+  "previous_attempt": "2026-11-12T06:14:54Z: no pod created (HTTP 500, no instances currently available), no cost",
+  "command": "python -m pii_benchmark.anonymize --data_path=benchmark/vllm/level_1.jsonl --results_path=benchmark/vllm/level_1.jsonl --anon_methods=llama_basic --level=1 --scenario=medical --timing=1",
+  "job_exit_code": 0,
+  "engine": "vllm 0.14.1 (uv.lock), meta-llama/Llama-3.1-8B-Instruct, dtype bfloat16, temperature 0, max_tokens 4096, one batched chat call",
+  "generation_time_s": 334,
+  "job_log": "benchmark/runpod_rat-bench-20261112063238.log"
+}

@@ -1,0 +1,9 @@
+{
+  "repo": "meta-llama/Llama-3.1-8B-Instruct",
+  "checked_at": "2026-11-12T06:14:24Z",
+  "token_source": "HF_TOKEN in the main checkout .env (value not recorded)",
+  "checks": [
+    {"url": "https://huggingface.co/api/whoami-v2", "status": 200},
+    {"url": "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct/resolve/main/config.json", "status": 200}
+  ]
+}

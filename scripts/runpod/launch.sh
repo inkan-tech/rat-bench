@@ -29,8 +29,10 @@ API=https://rest.runpod.io/v1
 # torch 2.9.1 wheels need a CUDA >= 12.8 host driver.
 IMAGE=runpod/pytorch:1.3.3-cu1290-torch291-ubuntu2204
 CUDA_VERSIONS='["12.8","12.9","13.0"]'
-# 24GB is enough for Llama-3.1-8B in bf16 with an 8192 context.
-GPUS='["NVIDIA GeForce RTX 4090","NVIDIA RTX A5000","NVIDIA GeForce RTX 3090"]'
+# 24GB is enough for Llama-3.1-8B in bf16 with an 8192 context. Cheapest first
+# (SECURE $/h on 2026-11-12: A5000 0.27, 3090 0.50, A6000 0.59, L4 0.59,
+# 4090 0.89, 6000 Ada 0.99, L40S 1.09); the wide pool avoids "no instances".
+GPUS='["NVIDIA RTX A5000","NVIDIA GeForce RTX 3090","NVIDIA RTX A6000","NVIDIA L4","NVIDIA GeForce RTX 4090","NVIDIA RTX 6000 Ada Generation","NVIDIA L40S"]'
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
 REMOTE=/root/rat-bench
 
@@ -91,7 +93,8 @@ ssh_pod() {
 
 fetch_results() {
   echo "Fetching benchmark/ and the job log"
-  rsync -az -e "ssh -i $WORK/key -p $PORT -o UserKnownHostsFile=$WORK/known_hosts" \
+  # --update: a local file newer than the pod copy is kept.
+  rsync -az --update -e "ssh -i $WORK/key -p $PORT -o UserKnownHostsFile=$WORK/known_hosts" \
     "root@$IP:$REMOTE/benchmark/" "$REPO/benchmark/" || echo "rsync of benchmark/ failed" >&2
   ssh_pod "cat /root/job.log" > "$REPO/benchmark/runpod_$NAME.log" 2>/dev/null || true
 }
@@ -121,14 +124,14 @@ BODY=$(jq -n --arg name "$NAME" --arg image "$IMAGE" --arg cloud "$CLOUD" \
     env: {PUBLIC_KEY: $pub}}')
 
 START=$(date +%s)
-for attempt in 1 2 3; do
+for attempt in 1 2 3 4 5 6; do
   if POD=$(api POST /pods "$BODY" 2>&1); then
     POD_ID=$(jq -r .id <<<"$POD")
     break
   fi
-  echo "Pod creation failed (attempt $attempt/3): $POD" >&2
+  echo "Pod creation failed (attempt $attempt/6): $POD" >&2
   case $POD in
-    *"does not have the resources"*|*"Something went wrong"*|*"no longer any instances"*) sleep 15 ;;
+    *"does not have the resources"*|*"Something went wrong"*|*"no longer any instances"*|*"no instances currently available"*) sleep 15 ;;
     *) exit 1 ;;
   esac
 done

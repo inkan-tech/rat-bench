@@ -352,10 +352,37 @@ def process_col_nl(c, guess_correctness, ground_truth, cols_to_fit):
         return None, cols_to_fit
 
 
+def _rank_encode(dff: pd.DataFrame):
+    """Map each column's distinct values to ranks 1..k.
+
+    CorrectMatch fitted on a matrix labels each column's categories 1..k (k =
+    number of distinct values) and reads a record value as that category
+    number. A column whose codes have gaps (DOB: 34739 distinct values coded up
+    to 34847) then points a record at the wrong category, or past the last one
+    (MethodError on pdf(..., nothing)). Columns already coded 1..k map to
+    themselves, so their results do not change.
+    """
+    maps = [{v: i + 1 for i, v in enumerate(np.sort(dff[c].unique()))} for c in dff.columns]
+    encoded = np.column_stack([dff[c].map(m).to_numpy() for c, m in zip(dff.columns, maps)])
+    return encoded.astype(np.int64), maps
+
+
+def _encode_record(record_to_analyze: List[int], maps) -> np.ndarray:
+    encoded = []
+    for v, m in zip(record_to_analyze, maps):
+        if v not in m:
+            raise ValueError(f"record value {v} does not occur in the fitted column")
+        encoded.append(m[v])
+    return np.array(encoded)
+
+
 def compute_correctness(model, record_to_analyze: List[int], n: int | None):
+    """`model` is the (fitted CorrectMatch model, rank maps) pair from fit_model_and_compute."""
     if n is None:
         n = N
 
+    model, maps = model
+    record_to_analyze = _encode_record(record_to_analyze, maps)
     correctness_list = []
     uniqueness_list = []
 
@@ -387,8 +414,11 @@ def fit_model_and_compute(cols_to_fit: List[str], record_to_analyze: List[int], 
     if n is None:
         n = N
 
+    encoded, maps = _rank_encode(dff)
+    record_to_analyze = _encode_record(record_to_analyze, maps)
+
     _seed_correctmatch()
-    model = correctmatch.fit_model(dff.to_numpy())
+    model = correctmatch.fit_model(encoded)
 
     correctness_list = []
     uniqueness_list = []
@@ -412,8 +442,8 @@ def fit_model_and_compute(cols_to_fit: List[str], record_to_analyze: List[int], 
     
     correctness = np.mean([c for c in correctness_list if not np.isnan(c)])
     iu = np.mean([u for u in uniqueness_list if not np.isnan(u)])
-    
-    return correctness, iu, model
+
+    return correctness, iu, (model, maps)
 
 
 REID_CORRECTNESS_THRESHOLD = 0.2

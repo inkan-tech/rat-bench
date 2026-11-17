@@ -10,7 +10,7 @@ from pii_benchmark.credentials import anthropic_api_key
 class AnthropicAnonymizer(Anonymizer):
     def __init__(
         self,
-        model_version: str = "claude-haiku-4-5-20251001",
+        model_version: str = "claude-haiku-5-5",
         attributes: List[str]|None = None,
         language: str = "English",
         prompt_type: str = "anthropic"
@@ -34,7 +34,8 @@ class AnthropicAnonymizer(Anonymizer):
             ],
         )
 
-        out = message.content[0].text
+        # Thinking is on by default: read text blocks by type, not by position
+        out = "".join(b.text for b in message.content if b.type == "text")
 
         if self.prompt_type=="rescriber":
             redacted_text = text

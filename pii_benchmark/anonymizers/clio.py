@@ -9,7 +9,7 @@ from pii_benchmark.credentials import anthropic_api_key
 class ClioAnonymizer(Anonymizer):
     def __init__(
         self,
-        model_version: str = "claude-opus-4-1-20250805",
+        model_version: str = "claude-opus-5-5",
         attributes: List[str] = None,
     ):
         super().__init__()
@@ -23,11 +23,10 @@ class ClioAnonymizer(Anonymizer):
         message = client.messages.create(
             model=self.model_version,
             max_tokens=1000,
-            temperature=0,
             system=base_prompt,
             messages=[
                 {"role": "user", "content": [{"type": "text", "text": text}]}
             ],
         )
 
-        return message.content[0].text
+        return "".join(b.text for b in message.content if b.type == "text")
